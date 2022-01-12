@@ -10,6 +10,8 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.json:json:20211205'
+    implementation 'it.unimi.dsi:fastutil:8.5.6'
     implementation 'org.apache.logging.log4j:log4j-core:2.17.1'
     implementation 'org.jetbrains:annotations:22.0.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'

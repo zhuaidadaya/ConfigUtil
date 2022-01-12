@@ -1,5 +1,9 @@
 package com.github.zhuaidadaya.config.utils;
 
+import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -7,7 +11,6 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.security.SecureRandom;
 import java.util.*;
 
 
@@ -15,67 +18,67 @@ public class ConfigUtil {
     /**
      *
      */
-    private final LinkedHashMap<Object, Config<Object, Object>> configs = new LinkedHashMap<>();
-    private final LinkedHashMap<Object, Object> utilConfigs = new LinkedHashMap<>();
+    private final Object2ObjectMap<Object, Config<Object, Object>> configs = new Object2ObjectArrayMap<>();
     private EncryptionType encryptionType = EncryptionType.COMPOSITE_SEQUENCE;
     /**
      *
      */
-    private Logger logger;
-    private boolean encryption = false;
+    private Logger logger  = LogManager.getLogger("ConfigUtil");
     /**
      * if true
      * run <code>writeConfig()</code> when config has updated
      */
-    private boolean autoWrite = true;
     private String entrust;
     private String note;
     private boolean empty = false;
     private int splitRange = 20;
     private int libraryOffset = 5;
-    private boolean encryptionHead = false;
     private boolean canShutdown = true;
     private boolean shuttingDown = false;
     private boolean shutdown = false;
 
+    public ConfigUtil() {
+        defaultUtilConfigs();
+        readConfig(true);
+    }
+
     public ConfigUtil(String entrust) {
-        utilConfigs.put("path", System.getProperty("user.dir"));
-        utilConfigs.put("name", "settings.conf");
-        utilConfigs.put("version", "1.1");
+        defaultUtilConfigs();
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
 
-    public ConfigUtil(String configPath, String entrust) {
-        utilConfigs.put("path", configPath);
-        utilConfigs.put("name", "settings.conf");
-        utilConfigs.put("version", "1.1");
+    public ConfigUtil( String entrust, String configPath) {
+        defaultUtilConfigs();
+        addUtilConfig("path", configPath);
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
 
-    public ConfigUtil(String configPath, String configName, String entrust) {
-        utilConfigs.put("path", configPath);
-        utilConfigs.put("name", configName);
-        utilConfigs.put("version", "1.1");
+    public ConfigUtil(String entrust, String configPath, String configName) {
+        defaultUtilConfigs();
+        addUtilConfig("path", configPath);
+        addUtilConfig("name", configName);
         this.entrust = entrust;
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
 
-    public ConfigUtil(String configPath, String configName, String configVersion, String entrust) {
-        utilConfigs.put("path", configPath);
-        utilConfigs.put("name", configName);
-        utilConfigs.put("version", configVersion);
+    public ConfigUtil(String entrust, String configPath, String configName, String configVersion) {
+        defaultUtilConfigs();
+        addUtilConfig("path", configPath);
+        addUtilConfig("name", configName);
+        addUtilConfig("version", configVersion);
         this.entrust = entrust;
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
 
-    public ConfigUtil(String configPath, String configName, String configVersion, String entrust, boolean empty) {
-        utilConfigs.put("path", configPath);
-        utilConfigs.put("name", configName);
-        utilConfigs.put("version", configVersion);
+    public ConfigUtil( String entrust, String configPath, String configName, String configVersion, boolean empty) {
+        defaultUtilConfigs();
+        addUtilConfig("path", configPath);
+        addUtilConfig("name", configName);
+        addUtilConfig("version", configVersion);
         this.entrust = entrust;
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         this.empty = empty;
@@ -83,15 +86,67 @@ public class ConfigUtil {
             readConfig(true);
     }
 
+    public static void main(String[] args) {
+        ConfigUtil config = new ConfigUtil("config/", "test.mhf", "1.1", "CU").setEncryptionType(EncryptionType.COMPOSITE_SEQUENCE) //
+                .setLibraryOffset(50) //
+                .setSplitRange(5000) //
+                .setEncryption(true) //
+                .setEncryptionHead(true) //
+                .setInseparableLevel(3); //
+        //                ;
+
+        Logger logger = LogManager.getLogger("Teat");
+
+        int count = 0;
+        while(true) {
+            try {
+                count++;
+                long startTime = System.currentTimeMillis();
+                config.readConfig();
+                logger.info("read done in " + (System.currentTimeMillis() - startTime) + "ms, load " + config.getConfigTotal() + " configs");
+                config.set("test" + count, "teeeeeeeeeeeeeeeeeeeeeeeeest" + count);
+                config.writeConfig();
+                logger.info("write done in " + (System.currentTimeMillis() - startTime) + "ms, load " + config.getConfigTotal() + " configs");
+
+                if(count >500) {
+                    config.shutdown();
+
+                    break;
+                }
+            } catch (Exception e) {
+                logger.info("test failed after " + count + ", CU have " + config.getConfigTotal() + " configs");
+            }
+        }
+    }
+
     public static ConfigUtil emptyConfigUtil() {
         return new ConfigUtil(null, null, "1.1", null, true);
+    }
+
+    public void defaultUtilConfigs() {
+        addUtilConfig("path", System.getProperty("user.dir"));
+        addUtilConfig("name", "config.mhf");
+        addUtilConfig("version", "1.2");
+        addUtilConfig("autoWrite", true);
+        addUtilConfig("inseparableLevel", 3);
+        addUtilConfig("encryptionHead", false);
+        addUtilConfig("encryption", false);
+    }
+
+    public void addUtilConfig(Object name, Object value) {
+        configs.put("CU%" + name, new Config<>("CU%" + name, value, false));
+    }
+
+    public ConfigUtil setInseparableLevel(int inseparableLevel) {
+        configs.put("CU%inseparableLevel", new Config<>("CU%inseparableLevel", inseparableLevel > - 1 ? inseparableLevel < 4 ? inseparableLevel : 3 : 0, false));
+        return this;
     }
 
     public ConfigUtil setLibraryOffset(int offset) {
         if(offset != - 1)
             this.libraryOffset = Math.max(1, offset);
         else
-            this.libraryOffset = 25565;
+            this.libraryOffset = 1024;
         return this;
     }
 
@@ -117,12 +172,12 @@ public class ConfigUtil {
     }
 
     public ConfigUtil setEncryptionHead(boolean encryptionHead) {
-        this.encryptionHead = encryptionHead;
+        addUtilConfig("encryptionHead", encryptionHead);
         return this;
     }
 
     public ConfigUtil setAutoWrite(boolean autoWrite) {
-        this.autoWrite = autoWrite;
+        configs.put("CU%autoWrite", new Config<>("CU%autoWrite", autoWrite, false));
         return this;
     }
 
@@ -138,8 +193,8 @@ public class ConfigUtil {
     }
 
     public ConfigUtil setEncryption(boolean encryption) {
-        this.encryption = encryption;
-        if(autoWrite) {
+        addUtilConfig("encryption", encryption);
+        if(getUtilBoolean("autoWrite")) {
             try {
                 writeConfig();
             } catch (Exception e) {
@@ -149,16 +204,12 @@ public class ConfigUtil {
         return this;
     }
 
-    public LinkedHashMap<Object, Config<Object, Object>> getConfigs() {
+    public Map<Object, Config<Object, Object>> getConfigs() {
         return configs;
     }
 
     public Config<Object, Object> getConfig(Object conf) {
         return configs.get(conf);
-    }
-
-    public String getConfigValue(Object conf) {
-        return getConfig(conf).getValue();
     }
 
     public boolean readConfig() {
@@ -183,20 +234,21 @@ public class ConfigUtil {
         int configSize = 0;
         try {
             if(log)
-                logger.info("loading config from: " + utilConfigs.get("name").toString());
+                logger.info("loading config from: " + getUtilString("name"));
 
-            JSONArray configs;
-
-            File configFile = new File(utilConfigs.get("path").toString() + "/" + utilConfigs.get("name").toString());
+            File configFile = new File(getUtilString("path") + "/" + getUtilString("name"));
 
             BufferedReader br = new BufferedReader(new FileReader(configFile, Charset.forName("unicode")));
-            StringBuilder builder = decryption(br, false);
-
-
-            configs = new JSONObject(builder.toString()).getJSONArray("configs");
-            configSize = builder.length();
+            StringBuilder builder = decryption(br, forceLoad);
 
             br.close();
+
+            JSONObject source = new JSONObject(builder.toString());
+            JSONArray configs = source.getJSONArray("configs");
+            configSize = builder.length();
+
+            if(log)
+                logger.info("loading configs");
 
             for(Object o : configs) {
                 JSONObject config = new JSONObject(o.toString());
@@ -206,13 +258,21 @@ public class ConfigUtil {
                 JSONObject configDetailed = config.getJSONObject(configKey);
                 if(configDetailed.getBoolean("listTag")) {
                     JSONArray array = configDetailed.getJSONArray("values");
-                    LinkedList<Object> addToConfig = new LinkedList<>();
+                    ObjectArraySet<Object> addToConfig = new ObjectArraySet<>();
                     for(Object inArray : array)
                         addToConfig.add(inArray);
-                    setListConf(true, configKey, addToConfig.toArray());
+                    setListConf(true, configKey, addToConfig);
                 } else {
                     setConf(true, configKey, configDetailed.get("value").toString());
                 }
+            }
+
+            if(log)
+                logger.info("loading manifest");
+
+            JSONObject manifest = source.getJSONObject("manifest");
+            for(String s : manifest.keySet()) {
+                addUtilConfig(s, manifest.get(s));
             }
 
             if(log)
@@ -227,9 +287,10 @@ public class ConfigUtil {
             throw e;
         } catch (Exception e) {
             if(! shuttingDown) {
-                logger.error(empty ? ("failed to load config") : ("failed to load config: " + utilConfigs.get("name").toString()));
+                e.printStackTrace();
+                logger.error(empty ? ("failed to load config") : ("failed to load config: " + getUtilString("name")));
                 if(! empty) {
-                    File configFile = new File(utilConfigs.get("path").toString() + "/" + utilConfigs.get("name").toString());
+                    File configFile = new File(getUtilString("path") + "/" + getUtilString("name"));
                     if(! configFile.isFile() || configFile.length() == 0 || configSize == 0) {
                         try {
                             configFile.getParentFile().mkdirs();
@@ -251,7 +312,7 @@ public class ConfigUtil {
 
     public StringBuilder decryption() {
         try {
-            File configFile = new File(utilConfigs.get("path").toString() + "/" + utilConfigs.get("name").toString());
+            File configFile = new File(getUtilString("path") + "/" + getUtilString("name"));
 
             BufferedReader br = new BufferedReader(new FileReader(configFile, Charset.forName("unicode")));
 
@@ -268,8 +329,7 @@ public class ConfigUtil {
     public StringBuilder decryption(BufferedReader reader, boolean forceLoad) {
         try {
             StringBuilder builder = new StringBuilder();
-            String cache;
-            cache = reader.readLine();
+            String cache = reader.readLine();
             if(cache == null) {
                 return null;
             }
@@ -327,7 +387,7 @@ public class ConfigUtil {
                             }
                         }
 
-                        HashMap<Integer, Integer> libraryMap = new HashMap<>();
+                        Int2IntMap libraryMap = new Int2IntOpenHashMap();
 
                         StringBuilder libraryInformation = new StringBuilder();
 
@@ -360,6 +420,8 @@ public class ConfigUtil {
                             }
                         }
 
+                        libraryRead.close();
+
                         StringBuilder information = new StringBuilder();
 
                         while((cache = configRead.readLine()) != null) {
@@ -372,7 +434,7 @@ public class ConfigUtil {
 
                         try {
                             for(int i : information.chars().toArray()) {
-                                recodeInformation.append((char) libraryMap.get(i).intValue());
+                                recodeInformation.append((char) libraryMap.get(i));
                             }
                         } catch (Exception e) {
 
@@ -381,7 +443,7 @@ public class ConfigUtil {
                         return recodeInformation;
                     }
                     default -> {
-                        if(forceLoad)
+                        if(! forceLoad)
                             throw new IllegalArgumentException("unsupported encryption type: " + encryptionType);
                     }
                 }
@@ -415,13 +477,13 @@ public class ConfigUtil {
 
         canShutdown = false;
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter(utilConfigs.get("path").toString() + "/" + utilConfigs.get("name").toString(), Charset.forName("unicode"), false));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(getUtilString("path") + "/" + getUtilString("name"), Charset.forName("unicode"), false));
 
         StringBuilder write = new StringBuilder(this.toJSONObject().toString());
 
-        Random r = new SecureRandom();
+        Random r = new Random();
 
-        if(encryption) {
+        if(getUtilBoolean("encryption")) {
             switch(encryptionType.getId()) {
                 case 0 -> {
                     StringBuffer buffer = encryptionByRandomSequence(write, r);
@@ -436,7 +498,7 @@ public class ConfigUtil {
             }
         } else {
             StringBuffer buffer = new StringBuffer();
-            buffer.append("no encryption config: [config_size=").append(write.length()).append(", config_version=").append(utilConfigs.get("version")).append("]");
+            buffer.append("no encryption config: [config_size=").append(write.length()).append(", config_version=").append(getUtilString("version")).append("]");
             buffer.append("\n");
             buffer.append(write);
             write(writer, buffer);
@@ -459,7 +521,7 @@ public class ConfigUtil {
     }
 
     public void write(String information) throws IOException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(utilConfigs.get("path").toString() + "/" + utilConfigs.get("name").toString(), Charset.forName("unicode"), false));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(getUtilString("path") + "/" + getUtilString("name"), Charset.forName("unicode"), false));
         write(writer, new StringBuffer(information));
         writer.close();
     }
@@ -473,7 +535,7 @@ public class ConfigUtil {
 
         StringWriter writer = new StringWriter();
 
-        if(encryption) {
+        if(getUtilBoolean("encryption")) {
             int wrap = splitRange;
 
             for(; wrap > 0; wrap--) {
@@ -494,8 +556,15 @@ public class ConfigUtil {
 
         writer.write(0);
 
-        if(! encryptionHead) {
-            writer.write(" encryption: [" + "type=" + encryptionType.getName() + ", " + "SUPPORT=MCH -> https://github.com/zhuaidadaya/ConfigUtil , " + "check code=" + checkingCode + ", " + "offset=" + checkingCodeRange + ", " + "config size=" + write.length() + ", " + "config version=" + utilConfigs.get("version") + ", " + "split=" + split + ", " + "split range=" + splitRange + "]");
+        if(! getUtilBoolean("encryptionHead")) {
+            writer.write(" encryption: [" + "type=" + encryptionType.getName() + ", ");
+            writer.write("SUPPORT=MCH -> https://github.com/zhuaidadaya/ConfigUtil , ");
+            writer.write("check code=" + checkingCode + ", ");
+            writer.write("offset=" + checkingCodeRange + ", ");
+            writer.write("config size=" + write.length() + ", ");
+            writer.write("config version=" + getUtilString("version") + ", ");
+            writer.write("split=" + split + ", ");
+            writer.write("split range=" + splitRange + "]");
             writer.write(10);
             writer.write(formatNote());
             writer.write(10);
@@ -508,7 +577,7 @@ public class ConfigUtil {
             write2RandomByte(writer);
             writer.write(" OFFSET?" + checkingCodeRange);
             write3RandomByte(writer, checkingCodeRange);
-            writer.write(" VER?" + utilConfigs.get("version"));
+            writer.write(" VER?" + getUtilString("version"));
             write2RandomByte(writer, checkingCodeRange);
             writer.write(" EC?" + checkingCode);
             write2RandomByte(writer, checkingCodeRange);
@@ -539,7 +608,7 @@ public class ConfigUtil {
     }
 
     public StringBuffer encryptionByCompositeSequence(StringBuilder write) {
-        SecureRandom r = new SecureRandom();
+        Random r = new Random();
         int checkingCodeRange = 1024 * 12;
         int checkingCode = r.nextInt(checkingCodeRange);
         checkingCode = checkingCode > 13 ? checkingCode : 14;
@@ -549,8 +618,15 @@ public class ConfigUtil {
 
         writer.write(1);
 
-        if(! encryptionHead) {
-            writer.write(" encryption: [" + "type=" + encryptionType.getName() + ", " + "SUPPORT=MCH -> https://github.com/zhuaidadaya/ConfigUtil , " + "offset=" + checkingCodeRange + ", " + "config size=" + write.length() + ", " + "config version=" + utilConfigs.get("version") + "]");
+        if(! getUtilBoolean("encryptionHead")) {
+            writer.write(" encryption: [");
+            writer.write("type=" + encryptionType.getName() + ", ");
+            writer.write("SUPPORT=MCH -> https://github.com/zhuaidadaya/ConfigUtil , ");
+            writer.write("check code=" + checkingCode + ", ");
+            writer.write("offset=" + checkingCodeRange + ", ");
+            writer.write("config size=" + write.length() + ", ");
+            writer.write("config version=" + getUtilString("version"));
+            writer.write("]");
             writer.write(10);
             writer.write(formatNote());
             writer.write(10);
@@ -563,7 +639,7 @@ public class ConfigUtil {
             write3RandomByte(writer);
             writer.write(" OFFSET?" + checkingCodeRange);
             write2RandomByte(writer);
-            writer.write(" VER?" + utilConfigs.get("version"));
+            writer.write(" VER?" + getUtilString("version"));
             write2RandomByte(writer);
             writer.write(" SZ?" + write.length());
             write3RandomByte(writer);
@@ -578,38 +654,48 @@ public class ConfigUtil {
         write3RandomByte(writer);
         writer.write("\n");
 
-        HashMap<String, Integer> libraryMap = new HashMap<>();
+        Object2IntMap<String> libraryMap = new Object2IntArrayMap<>();
+        Int2IntMap libraryOffsetIndex = new Int2IntArrayMap();
 
         int count = 0;
         int lim = r.nextInt(checkingCodeRange);
         int head = lim > 13 ? lim : 14;
-        int split = r.nextInt(50);
+        int split = 50;
         writer.write(head);
 
         int offset;
+        int inseparableLevel = getUtilInt("inseparableLevel");
 
         //  generate library
         for(Object o : charArray) {
-            offset = r.nextInt(libraryOffset);
+            offset = 0;
 
             int sourceChar = Integer.parseInt(o.toString());
+
+            try {
+                if(libraryOffsetIndex.get(sourceChar) > libraryOffset - 1) {
+                    continue;
+                }
+            } catch (Exception e) {
+
+            }
+
             int writeChar = sourceChar + checkingCode + head;
 
             boolean dump = false;
-            boolean next = false;
 
-            while(libraryMap.containsKey(sourceChar + "-" + offset)) {
-                dump = true;
-                offset++;
-                if(offset > libraryOffset - 1) {
-                    next = true;
-                    break;
-                }
-            }
+            //            while(libraryMap.containsKey(sourceChar + "-" + offset)) {
+            //                dump = true;
+            try {
+                offset = libraryOffsetIndex.get(sourceChar) + 1;
+            } catch (Exception e) {
 
-            if(next) {
-                continue;
             }
+            //                if(offset > libraryOffset - 1) {
+            //                    next = true;
+            //                    break;
+            //                }
+            //            }
 
             count++;
 
@@ -622,9 +708,15 @@ public class ConfigUtil {
             if(dump) {
                 writer.write("\b");
                 writer.write(head);
-            } else if(count > split) {
+            }
+
+            if(count > split) {
                 writer.write(10);
-                split = r.nextInt(50);
+                switch(inseparableLevel) {
+                    case 0 -> split = r.nextInt(15);
+                    case 1 -> split = r.nextInt(30);
+                    case 2 -> split = r.nextInt(50);
+                }
                 count = 0;
                 lim = r.nextInt(checkingCodeRange);
                 head = lim > 13 ? lim : 14;
@@ -638,8 +730,10 @@ public class ConfigUtil {
             }
 
             if(libraryMap.containsKey(sourceChar + "-0")) {
+                libraryOffsetIndex.put(sourceChar, offset);
                 libraryMap.put(sourceChar + "-" + offset, writeChar);
             } else {
+                libraryOffsetIndex.put(sourceChar, 0);
                 libraryMap.put(sourceChar + "-0", writeChar);
             }
 
@@ -649,22 +743,10 @@ public class ConfigUtil {
         StringBuilder writeInformation = new StringBuilder();
 
         for(int c : charArray) {
-            Integer integer;
-            int tryCount = 0;
-            while(true) {
-                tryCount++;
-
-                if(tryCount < libraryOffset)
-                    integer = libraryMap.get(c + "-" + r.nextInt(libraryOffset));
-                else
-                    integer = libraryMap.get(c + "-0");
-
-                if(integer != null) {
-                    writeInformation.append((char) integer.intValue());
-
-                    break;
-                }
-            }
+            if(libraryOffsetIndex.get(c) == 0)
+                writeInformation.append((char) libraryMap.get(c + "-0").intValue());
+            else
+                writeInformation.append((char) libraryMap.get(c + "-" + r.nextInt(libraryOffsetIndex.get(c))).intValue());
         }
 
         writer.write("\n");
@@ -681,21 +763,30 @@ public class ConfigUtil {
         count = 0;
         lim = r.nextInt(checkingCodeRange);
         head = lim > 13 ? lim : 14;
-        split = r.nextInt(150);
+        split = 300;
         writer.write(head);
         for(int c : writeInformation.chars().toArray()) {
             count++;
             tabCount++;
             if(count > split) {
                 writer.write(10);
-                split = r.nextInt(150);
+                switch(inseparableLevel) {
+                    case 0 -> split = r.nextInt(300);
+                    case 1 -> split = Math.max(150, r.nextInt(300));
+                    case 2 -> split = Math.max(200, r.nextInt(300));
+                    case 3 -> split = 300;
+                }
                 count = 0;
                 lim = r.nextInt(checkingCodeRange);
                 head = lim > 13 ? lim : 14;
                 writer.write(head);
-            } else if(tabCount > tab) {
+            } else if(tabCount > tab & ! (inseparableLevel == 3)) {
                 writer.write("\t");
-                tab = r.nextInt(15);
+                switch(inseparableLevel) {
+                    case 0 -> tab = r.nextInt(15);
+                    case 1 -> tab = r.nextInt(30);
+                    case 2 -> tab = r.nextInt(50);
+                }
                 tabCount = 0;
             }
 
@@ -710,7 +801,7 @@ public class ConfigUtil {
     }
 
     public void writeRandomByte(Writer writer, int limit, int bytes) {
-        SecureRandom r = new SecureRandom();
+        Random r = new Random();
         try {
             for(int i = 0; i < bytes; i++) {
                 int next = r.nextInt(limit);
@@ -746,7 +837,7 @@ public class ConfigUtil {
         if(configKeysValues.length > 1 & configKeysValues.length % 2 != 0)
             throw new IllegalArgumentException("values argument size need Integral multiple of 2, but argument size " + configKeysValues.length + " not Integral multiple of 2");
         configs.put(key, new Config<>(key, configKeysValues, false));
-        if(autoWrite & ! init) {
+        if(getUtilBoolean("autoWrite") & ! init) {
             try {
                 writeConfig();
             } catch (Exception e) {
@@ -763,7 +854,7 @@ public class ConfigUtil {
 
     public ConfigUtil setListConf(boolean init, Object key, Object... configValues) {
         configs.put(key, new Config<>(key, configValues, true));
-        if(autoWrite & ! init) {
+        if(getUtilBoolean("autoWrite") & ! init) {
             try {
                 writeConfig();
             } catch (Exception e) {
@@ -799,10 +890,12 @@ public class ConfigUtil {
         json.put("configs", addToConfig);
 
         JSONObject manifest = new JSONObject();
-        manifest.put("configVersion", utilConfigs.get("version"));
+        manifest.put("configVersion", getUtilString("version"));
         manifest.put("configsTotal", configs.size());
-        manifest.put("encryption", encryption);
-        manifest.put("config", new File(utilConfigs.get("path") + "/" + utilConfigs.get("name")).getAbsolutePath());
+        manifest.put("encryption", getUtilBoolean("encryption"));
+        manifest.put("encryptionHead", getUtilBoolean("encryptionHead"));
+        manifest.put("config", new File(getUtilString("path") + "/" + getUtilString("name")));
+        manifest.put("autoWrite", getUtilBoolean("autoWrite"));
         json.put("manifest", manifest);
 
         return json;
@@ -879,6 +972,54 @@ public class ConfigUtil {
 
     public boolean isShutdown() {
         return shutdown;
+    }
+
+    public String getConfigString(Object config) {
+        return getConfig(config).getString();
+    }
+
+    public int getConfigInt(Object config) {
+        return getConfig(config).getInt();
+    }
+
+    public long getConfigLong(Object config) {
+        return getConfig(config).getLong();
+    }
+
+    public boolean getConfigBoolean(Object config) {
+        return getConfig(config).getBoolean();
+    }
+
+    public JSONObject getConfigJSONObject(Object config) {
+        return getConfig(config).getJSONObject();
+    }
+
+    public JSONArray getConfigJSONArray(Object config) {
+        return getConfig(config).getJSONArray();
+    }
+
+    public String getUtilString(Object config) {
+        return getConfig("CU%" + config).getString();
+    }
+
+    public boolean getUtilBoolean(Object config) {
+        return getConfig("CU%" + config).getBoolean();
+    }
+
+    public int getUtilInt(Object config) {
+        return getConfig("CU%" + config).getInt();
+    }
+
+    public long getUtilLong(Object config) {
+        return getConfig("CU%" + config).getLong();
+    }
+
+    public JSONObject getUtilJSONObject(Object config) {
+        return getConfig("CU%" + config).getJSONObject();
+    }
+
+    public JSONArray getUtilJSONArray(Object config) {
+        return getConfig("CU%" + config).getJSONArray();
     }
 }
 

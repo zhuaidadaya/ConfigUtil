@@ -1,5 +1,6 @@
 package com.github.zhuaidadaya.config.utils;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Arrays;
@@ -41,20 +42,54 @@ public class Config<K, V> {
         return configKey.toString();
     }
 
-    public String getValue() {
+    public Object getValue() {
         JSONObject json = toJSONObject();
         try {
-            return json.getJSONObject(json.keySet().toArray()[0].toString()).get("value").toString();
+            return json.getJSONObject(json.keySet().toArray()[0].toString()).get("value");
         } catch (Exception e) {
-            return json.getJSONObject(json.keySet().toArray()[0].toString()).getJSONArray("values").toString();
+            return json.getJSONObject(json.keySet().toArray()[0].toString()).getJSONArray("values");
         }
+    }
+
+    public String getString() {
+        return getValue().toString();
+    }
+
+    public int getInt() {
+        return Integer.parseInt(getString());
+    }
+
+    public long getLong() {
+        return Long.parseLong(getString());
+    }
+
+    public boolean getBoolean() {
+        String value = getString();
+        if(value.equals("true"))
+            return true;
+        if(value.equals("false"))
+            return false;
+        throw new IllegalArgumentException("cannot cast \"" + value + "\" to a boolean value");
+    }
+
+    public JSONObject getJSONObject() {
+        return new JSONObject(getValue().toString());
+    }
+
+    public JSONArray getJSONArray() {
+        return new JSONArray(getValue().toString());
     }
 
     public JSONObject toJSONObject() {
         if(configValue != null) {
             JSONObject json = new JSONObject();
             JSONObject values = new JSONObject();
-            Object[] configValues = (Object[]) configValue;
+            Object[] configValues;
+            try {
+                configValues = (Object[]) configValue;
+            } catch (ClassCastException e) {
+                configValues = new Object[]{configValue};
+            }
             if(configValues.length == 1) {
                 JSONObject inJ = new JSONObject();
                 inJ.put("listTag", listTag);
