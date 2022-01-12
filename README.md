@@ -76,7 +76,7 @@ public class Test {
 these configs are set on demand
 
 if you do not need to empty or version<br>
-also can no existence in init<br>
+also can miss parameter in init<br>
 
 like this
 
