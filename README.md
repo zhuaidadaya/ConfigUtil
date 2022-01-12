@@ -77,6 +77,7 @@ these configs are set on demand
 
 if you do not need to empty or version<br>
 also can no existence in init<br>
+
 like this
 
 ```java
@@ -95,6 +96,6 @@ public class Test {
 }
 ```
 
-every parameter is all like this in init CU
-
+every parameter is all can do this in init CU<br>
+(but location of parameters is required)
 
