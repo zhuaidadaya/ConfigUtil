@@ -36,12 +36,13 @@ public class ConfigUtil {
     private boolean encryptionHead = false;
     private boolean canShutdown = true;
     private boolean shuttingDown = false;
+    private boolean shutdown = false;
 
     public ConfigUtil(String entrust) {
         utilConfigs.put("path", System.getProperty("user.dir"));
         utilConfigs.put("name", "settings.conf");
         utilConfigs.put("version", "1.1");
-        logger = LogManager.getLogger("ConfigUtil/" + entrust);
+        logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
 
@@ -49,7 +50,7 @@ public class ConfigUtil {
         utilConfigs.put("path", configPath);
         utilConfigs.put("name", "settings.conf");
         utilConfigs.put("version", "1.1");
-        logger = LogManager.getLogger("ConfigUtil/" + entrust);
+        logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
 
@@ -58,7 +59,7 @@ public class ConfigUtil {
         utilConfigs.put("name", configName);
         utilConfigs.put("version", "1.1");
         this.entrust = entrust;
-        logger = LogManager.getLogger("ConfigUtil/" + entrust);
+        logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
 
@@ -67,7 +68,7 @@ public class ConfigUtil {
         utilConfigs.put("name", configName);
         utilConfigs.put("version", configVersion);
         this.entrust = entrust;
-        logger = LogManager.getLogger("ConfigUtil/" + entrust);
+        logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
 
@@ -76,44 +77,10 @@ public class ConfigUtil {
         utilConfigs.put("name", configName);
         utilConfigs.put("version", configVersion);
         this.entrust = entrust;
-        logger = LogManager.getLogger("ConfigUtil/" + entrust);
+        logger = LogManager.getLogger("ConfigUtil-" + entrust);
         this.empty = empty;
         if(! empty)
             readConfig(true);
-    }
-
-    public static void main(String[] args) {
-        ConfigUtil config = new ConfigUtil("config/", "barnacle.mhf", "1.1", "CU") //
-                .setEncryption(true)//
-                .setEncryptionHead(true)//
-                .setEncryptionType(EncryptionType.COMPOSITE_SEQUENCE)//
-                .setSplitRange(5000).setLibraryOffset(0);//
-
-        config.safeShutdownHook();
-
-        long count = 0;
-
-        try {
-            while(true) {
-                long start = System.currentTimeMillis();
-                if(config.readConfig(false)) {
-                    if(config.getConfigTotal() < 100)
-                        config.set("test" + count, "teeeeeeeeeeeeeeeeeeeeeest" + count);
-                    config.writeConfig();
-                    count++;
-                } else {
-
-                }
-
-                //                System.out.println(count + "times load are done in " + (System.currentTimeMillis() - start) + "ms");
-
-                System.gc();
-            }
-        } catch (Exception e) {
-
-        }
-
-        System.out.println("failed to load at trying " + count + " times");
     }
 
     public static ConfigUtil emptyConfigUtil() {
@@ -121,7 +88,10 @@ public class ConfigUtil {
     }
 
     public ConfigUtil setLibraryOffset(int offset) {
-        this.libraryOffset = Math.max(1, offset);
+        if(offset != - 1)
+            this.libraryOffset = Math.max(1, offset);
+        else
+            this.libraryOffset = 25565;
         return this;
     }
 
@@ -223,7 +193,6 @@ public class ConfigUtil {
             StringBuilder builder = decryption(br, false);
 
 
-            System.out.println(builder.toString());
             configs = new JSONObject(builder.toString()).getJSONArray("configs");
             configSize = builder.length();
 
@@ -258,7 +227,6 @@ public class ConfigUtil {
             throw e;
         } catch (Exception e) {
             if(! shuttingDown) {
-                e.printStackTrace();
                 logger.error(empty ? ("failed to load config") : ("failed to load config: " + utilConfigs.get("name").toString()));
                 if(! empty) {
                     File configFile = new File(utilConfigs.get("path").toString() + "/" + utilConfigs.get("name").toString());
@@ -359,7 +327,7 @@ public class ConfigUtil {
                             }
                         }
 
-                        LinkedHashMap<Integer, Integer> libraryMap = new LinkedHashMap<>();
+                        HashMap<Integer, Integer> libraryMap = new HashMap<>();
 
                         StringBuilder libraryInformation = new StringBuilder();
 
@@ -610,8 +578,7 @@ public class ConfigUtil {
         write3RandomByte(writer);
         writer.write("\n");
 
-        LinkedHashMap<String, Integer> libraryMap = new LinkedHashMap<>();
-        HashSet<String> libraryOffsets;
+        HashMap<String, Integer> libraryMap = new HashMap<>();
 
         int count = 0;
         int lim = r.nextInt(checkingCodeRange);
@@ -619,16 +586,11 @@ public class ConfigUtil {
         int split = r.nextInt(50);
         writer.write(head);
 
-        StringBuilder writeInformation = new StringBuilder();
-
         int offset;
 
         //  generate library
         for(Object o : charArray) {
-            libraryOffsets = new HashSet<>();
-
             offset = r.nextInt(libraryOffset);
-            libraryOffsets.add(offset + "-");
 
             int sourceChar = Integer.parseInt(o.toString());
             int writeChar = sourceChar + checkingCode + head;
@@ -638,19 +600,10 @@ public class ConfigUtil {
 
             while(libraryMap.containsKey(sourceChar + "-" + offset)) {
                 dump = true;
-                offset = 0;
-                while(libraryOffsets.contains(offset + "-")) {
-                    offset++;
-                    if(offset > libraryOffset - 1) {
-                        next = true;
-                        break;
-                    }
-                }
-
-                if(next) {
+                offset++;
+                if(offset > libraryOffset - 1) {
+                    next = true;
                     break;
-                } else {
-                    libraryOffsets.add(offset + "-");
                 }
             }
 
@@ -692,6 +645,8 @@ public class ConfigUtil {
 
             writer.write("\t");
         }
+
+        StringBuilder writeInformation = new StringBuilder();
 
         for(int c : charArray) {
             Integer integer;
@@ -889,37 +844,41 @@ public class ConfigUtil {
         this.shuttingDown = shuttingDown;
     }
 
-    public void safeShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.info("saving configs and shutting down ConfigUtil");
-            try {
-                while(! canShutdown()) {
-                    try {
-                        Thread.sleep(20);
-                    } catch (InterruptedException e) {
-
-                    }
-                }
-                writeConfig();
-
-                logger.info("all config are saved, shutting down");
-            } catch (Exception e) {
-                logger.error("failed to save configs, shutting down");
-            }
-            setShuttingDown(true);
+    public void shutdown() {
+        logger.info("saving configs and shutting down ConfigUtil");
+        try {
             while(! canShutdown()) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(20);
                 } catch (InterruptedException e) {
 
                 }
             }
-            logger.info("ConfigUtil are shutdown in safe hook");
-        }));
+
+            writeConfig();
+
+            logger.info("all config are saved, shutting down");
+        } catch (Exception e) {
+            logger.error("failed to save configs, shutting down");
+        }
+        setShuttingDown(true);
+        while(! canShutdown()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+
+            }
+        }
+        shutdown = true;
+        logger.info("ConfigUtil are shutdown");
     }
 
     public int getConfigTotal() {
         return configs.size();
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
     }
 }
 
