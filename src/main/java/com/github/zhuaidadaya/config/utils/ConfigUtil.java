@@ -28,8 +28,6 @@ public class ConfigUtil {
      * if true
      * run <code>writeConfig()</code> when config has updated
      */
-    private String entrust;
-    private String note;
     private boolean empty = false;
     private int splitRange = 20;
     private int libraryOffset = 5;
@@ -59,7 +57,7 @@ public class ConfigUtil {
         defaultUtilConfigs();
         setPath(configPath);
         setName(configName);
-        this.entrust = entrust;
+        setEntrust(entrust);
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
@@ -69,7 +67,7 @@ public class ConfigUtil {
         setPath(configPath);
         setName( configName);
         setVersion(configVersion);
-        this.entrust = entrust;
+        setEntrust(entrust);
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
@@ -79,7 +77,7 @@ public class ConfigUtil {
         setPath(configPath);
         setName(configName);
         setVersion(configVersion);
-        this.entrust = entrust;
+        setEntrust(entrust);
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         this.empty = empty;
         if(! empty)
@@ -189,7 +187,7 @@ public class ConfigUtil {
     }
 
     public ConfigUtil setEntrust(String entrust) {
-        this.entrust = entrust;
+        addUtilConfig("entrust", entrust);
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         return this;
     }
@@ -205,7 +203,7 @@ public class ConfigUtil {
     }
 
     public ConfigUtil setNote(String note) {
-        this.note = note;
+        addUtilConfig("note", note);
         return this;
     }
 
@@ -319,9 +317,9 @@ public class ConfigUtil {
                             configFile.getParentFile().mkdirs();
                             configFile.createNewFile();
                             writeConfig();
-                            logger.info("created new config file for " + entrust);
+                            logger.info("created new config file for " + getUtilString("entrust"));
                         } catch (Exception ex) {
-                            logger.error("failed to create new config file for " + entrust);
+                            logger.error("failed to create new config file for " + getUtilString("entrust"));
                         }
                     }
                 }
@@ -933,9 +931,9 @@ public class ConfigUtil {
     }
 
     public String formatNote() {
-        if(note != null) {
+        if(getUtilString("note") != null) {
             try {
-                BufferedReader reader = new BufferedReader(new StringReader(note));
+                BufferedReader reader = new BufferedReader(new StringReader(getUtilString("note")));
                 StringBuilder builder = new StringBuilder("/**\n");
 
                 String cache;

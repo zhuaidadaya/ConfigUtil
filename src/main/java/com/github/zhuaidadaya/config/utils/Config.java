@@ -52,7 +52,11 @@ public class Config<K, V> {
     }
 
     public String getString() {
-        return getValue().toString();
+        try {
+            return getValue().toString();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public int getInt() {

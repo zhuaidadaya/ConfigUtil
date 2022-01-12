@@ -99,7 +99,7 @@ public class Test {
 every parameter is all can do this in init CU<br>
 (but location of parameters is required)
 
-## set CU
+## Set CU
 
 CU maybe need set some options to use
 
@@ -150,6 +150,8 @@ public class ConfigUtil {
 
 </details>
 
+<hr>
+
 ### name
 name is file name of config<br>
 
@@ -197,6 +199,8 @@ public class ConfigUtil {
 
 </details>
 
+<hr>
+
 ### version
 set it by ``` setVersion(String) ```
 
@@ -235,6 +239,8 @@ public class ConfigUtil {
 
 </details>
 
+<hr>
+
 ### entrust
 entrust is a name of parent of config
 
@@ -267,7 +273,7 @@ import com.github.zhuaidadaya.config.utils.ConfigUtil;
 
 public class ConfigUtil {
     public ConfigUtil setEntrust(String entrust) {
-        this.entrust = entrust;
+        addUtilConfig("entrust", entrust);
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         return this;
     }
@@ -276,3 +282,104 @@ public class ConfigUtil {
 
 </details>
 
+<hr>
+
+### note
+note is a note in config
+
+set it by ``` setNote(String) ```
+
+<details>
+<summary>setNote</summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class Test {
+    ConfigUtil config;
+
+    public void initConfig() {
+        config = new ConfigUtil();
+        
+        config.setNote("""
+                This is a Example Note
+                It can Wrap Lines
+                to Note the Config
+                """);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>setNote Reference </summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class ConfigUtil {
+    public ConfigUtil setNote(String note) {
+        addUtilConfig("note", note);
+        return this;
+    }
+}
+```
+
+</details>
+
+<hr>
+
+### encryption
+encryption the config
+
+default encryption is "Composite Sequence"<br>
+see [Encryption](#Encryption)
+
+set it by ``` setEncryption(boolean) ```
+
+<details>
+<summary>setEncryption</summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class Test {
+    ConfigUtil config;
+
+    public void initConfig() {
+        config = new ConfigUtil();
+        
+        config.setEncryption(true);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>setEncryption Reference </summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class ConfigUtil {
+    public ConfigUtil setEncryption(boolean encryption) {
+        addUtilConfig("encryption", encryption);
+        if(getUtilBoolean("autoWrite")) {
+            try {
+                writeConfig();
+            } catch (Exception e) {
+
+            }
+        }
+        return this;
+    }
+}
+```
+
+</details>
+
+
+
+## Encryption
