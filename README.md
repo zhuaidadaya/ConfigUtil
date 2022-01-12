@@ -99,4 +99,180 @@ public class Test {
 every parameter is all can do this in init CU<br>
 (but location of parameters is required)
 
- 
+## set CU
+
+CU maybe need set some options to use
+
+here is options and explain
+
+### path
+path is file path location of config<br>
+it can make by absolute or relative path
+
+set it by ``` setPath(String) ``` or ``` setPath(File) ``` 
+
+<details>
+<summary>setPath</summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class Test {
+    ConfigUtil config;
+
+    public void initConfig() {
+        config = new ConfigUtil();
+        
+        config.setPath("/config");
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>setPath Reference </summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class ConfigUtil {
+    public ConfigUtil setPath(String path) {
+        addUtilConfig("path", path);
+        return this;
+    }
+
+    public ConfigUtil setPath(File path) {
+        return setPath(path.getPath());
+    }
+}
+```
+
+</details>
+
+### name
+name is file name of config<br>
+
+set it by ``` setName(String) ```
+
+> name require a suffix <br>
+> if did not have, will fix it to ".mhf" suffix
+
+<details>
+<summary>setName</summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class Test {
+    ConfigUtil config;
+
+    public void initConfig() {
+        config = new ConfigUtil();
+        
+        config.setName("config.mhf");
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>setName Reference </summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class ConfigUtil {
+    public ConfigUtil setName(String name) {
+        try {
+            name.substring(name.indexOf("."), name.indexOf(".") + 1);
+        } catch (Exception e) {
+            addUtilConfig("name", name + (String.valueOf(name.charAt(name.length() - 1)).equals(".") ? "mhf" : ".mhf"));
+        }
+        return this;
+    }
+}
+```
+
+</details>
+
+### version
+set it by ``` setVersion(String) ```
+
+<details>
+<summary>setVersion</summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class Test {
+    ConfigUtil config;
+
+    public void initConfig() {
+        config = new ConfigUtil();
+        
+        config.setVersion("1.2");
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>setVersion Reference </summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class ConfigUtil {
+    public ConfigUtil setVersion(String version) {
+        addUtilConfig("version", version);
+        return this;
+    }
+}
+```
+
+</details>
+
+### entrust
+entrust is a name of parent of config
+
+set it by ``` setEntrust(String) ```
+
+<details>
+<summary>setEntrust</summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class Test {
+    ConfigUtil config;
+
+    public void initConfig() {
+        config = new ConfigUtil();
+        
+        config.setEntrust("1.2");
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>setEntrust Reference </summary>
+
+```java
+import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
+public class ConfigUtil {
+    public ConfigUtil setEntrust(String entrust) {
+        this.entrust = entrust;
+        logger = LogManager.getLogger("ConfigUtil-" + entrust);
+        return this;
+    }
+}
+```
+
+</details>
+

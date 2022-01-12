@@ -50,15 +50,15 @@ public class ConfigUtil {
 
     public ConfigUtil( String entrust, String configPath) {
         defaultUtilConfigs();
-        addUtilConfig("path", configPath);
+        setPath(configPath);
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
     }
 
     public ConfigUtil(String entrust, String configPath, String configName) {
         defaultUtilConfigs();
-        addUtilConfig("path", configPath);
-        addUtilConfig("name", configName);
+        setPath(configPath);
+        setName(configName);
         this.entrust = entrust;
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
@@ -66,9 +66,9 @@ public class ConfigUtil {
 
     public ConfigUtil(String entrust, String configPath, String configName, String configVersion) {
         defaultUtilConfigs();
-        addUtilConfig("path", configPath);
-        addUtilConfig("name", configName);
-        addUtilConfig("version", configVersion);
+        setPath(configPath);
+        setName( configName);
+        setVersion(configVersion);
         this.entrust = entrust;
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         readConfig(true);
@@ -76,9 +76,9 @@ public class ConfigUtil {
 
     public ConfigUtil( String entrust, String configPath, String configName, String configVersion, boolean empty) {
         defaultUtilConfigs();
-        addUtilConfig("path", configPath);
-        addUtilConfig("name", configName);
-        addUtilConfig("version", configVersion);
+        setPath(configPath);
+        setName(configName);
+        setVersion(configVersion);
         this.entrust = entrust;
         logger = LogManager.getLogger("ConfigUtil-" + entrust);
         this.empty = empty;
@@ -121,6 +121,29 @@ public class ConfigUtil {
 
     public static ConfigUtil emptyConfigUtil() {
         return new ConfigUtil(null, null, "1.1", null, true);
+    }
+
+    public ConfigUtil setPath(String path) {
+        addUtilConfig("path", path);
+        return this;
+    }
+
+    public ConfigUtil setVersion(String version) {
+        addUtilConfig("version", version);
+        return this;
+    }
+
+    public ConfigUtil setName(String name) {
+        try {
+            name.substring(name.indexOf("."), name.indexOf(".") + 1);
+        } catch (Exception e) {
+            addUtilConfig("name", name + (String.valueOf(name.charAt(name.length() - 1)).equals(".") ? "mhf" : ".mhf"));
+        }
+        return this;
+    }
+
+    public ConfigUtil setPath(File path) {
+        return setPath(path.getPath());
     }
 
     public void defaultUtilConfigs() {
@@ -167,7 +190,7 @@ public class ConfigUtil {
 
     public ConfigUtil setEntrust(String entrust) {
         this.entrust = entrust;
-        logger = LogManager.getLogger("ConfigUtil/" + entrust);
+        logger = LogManager.getLogger("ConfigUtil-" + entrust);
         return this;
     }
 
