@@ -11,7 +11,7 @@ here we named ConfigUtil to "CU" for convenient
 a simple CU
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
 
 public class Test {
     ConfigUtil config;
@@ -56,14 +56,13 @@ public class ConfigUtil {
 here is settings to init CU
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
 
 public class Test {
     ConfigUtil config;
 
     public void initConfig() {
-        config = new ConfigUtil(
-                "CU", // entrust
+        config = new ConfigUtil("CU", // entrust
                 "/config", // path of config
                 "config.mhf", // name of config
                 "1.2", // version of config,
@@ -81,14 +80,13 @@ also can miss parameter in init<br>
 like this
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
 
 public class Test {
     ConfigUtil config;
 
     public void initConfig() {
-        config = new ConfigUtil(
-                "CU", // entrust
+        config = new ConfigUtil("CU", // entrust
                 "/config", // path of config
                 "config.mhf" // name of config
         );
@@ -115,14 +113,14 @@ set it by ``` setPath(String) ``` or ``` setPath(File) ```
 <summary>setPath</summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
 
 public class Test {
     ConfigUtil config;
 
     public void initConfig() {
         config = new ConfigUtil();
-        
+
         config.setPath("/config");
     }
 }
@@ -134,7 +132,7 @@ public class Test {
 <summary>setPath Reference </summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
 
 public class ConfigUtil {
     public ConfigUtil setPath(String path) {
@@ -164,14 +162,14 @@ set it by ``` setName(String) ```
 <summary>setName</summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
 
 public class Test {
     ConfigUtil config;
 
     public void initConfig() {
         config = new ConfigUtil();
-        
+
         config.setName("config.mhf");
     }
 }
@@ -183,12 +181,13 @@ public class Test {
 <summary>setName Reference </summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
 
 public class ConfigUtil {
     public ConfigUtil setName(String name) {
         try {
             name.substring(name.indexOf("."), name.indexOf(".") + 1);
+            addUtilConfig("name", name);
         } catch (Exception e) {
             addUtilConfig("name", name + (String.valueOf(name.charAt(name.length() - 1)).equals(".") ? "mhf" : ".mhf"));
         }
@@ -208,14 +207,14 @@ set it by ``` setVersion(String) ```
 <summary>setVersion</summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
 
 public class Test {
     ConfigUtil config;
 
     public void initConfig() {
         config = new ConfigUtil();
-        
+
         config.setVersion("1.2");
     }
 }
@@ -227,7 +226,7 @@ public class Test {
 <summary>setVersion Reference </summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
 
 public class ConfigUtil {
     public ConfigUtil setVersion(String version) {
@@ -250,14 +249,14 @@ set it by ``` setEntrust(String) ```
 <summary>setEntrust</summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
 
 public class Test {
     ConfigUtil config;
 
     public void initConfig() {
         config = new ConfigUtil();
-        
+
         config.setEntrust("1.2");
     }
 }
@@ -269,7 +268,7 @@ public class Test {
 <summary>setEntrust Reference </summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
 
 public class ConfigUtil {
     public ConfigUtil setEntrust(String entrust) {
@@ -293,14 +292,14 @@ set it by ``` setNote(String) ```
 <summary>setNote</summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
 
 public class Test {
     ConfigUtil config;
 
     public void initConfig() {
         config = new ConfigUtil();
-        
+
         config.setNote("""
                 This is a Example Note
                 It can Wrap Lines
@@ -316,7 +315,7 @@ public class Test {
 <summary>setNote Reference </summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
 
 public class ConfigUtil {
     public ConfigUtil setNote(String note) {
@@ -342,14 +341,14 @@ set it by ``` setEncryption(boolean) ```
 <summary>setEncryption</summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
 
 public class Test {
     ConfigUtil config;
 
     public void initConfig() {
         config = new ConfigUtil();
-        
+
         config.setEncryption(true);
     }
 }
@@ -361,7 +360,7 @@ public class Test {
 <summary>setEncryption Reference </summary>
 
 ```java
-import com.github.zhuaidadaya.config.utils.ConfigUtil;
+
 
 public class ConfigUtil {
     public ConfigUtil setEncryption(boolean encryption) {
@@ -380,6 +379,120 @@ public class ConfigUtil {
 
 </details>
 
+<hr>
+
+### encryption type
+encryption type use in config
+
+set it by ``` setEncryptionType(EncryptionType) ```
+
+<details>
+<summary>setEncryptionType</summary>
+
+```java
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
+import com.github.zhuaidadaya.utils.config.EncryptionType;
+
+public class Test {
+    ConfigUtil config;
+
+    public void initConfig() {
+        config = new ConfigUtil();
+
+        config.setEncryptionType(EncryptionType.COMPOSITE_SEQUENCE);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>setEncryptionType Reference </summary>
+
+```java
+
+
+public class ConfigUtil {
+    public ConfigUtil setEncryptionType(EncryptionType type) {
+        this.encryptionType = type;
+        return this;
+    }
+}
+```
+
+</details>
+
+<hr>
+
+### library offset
+information of Composite Sequence
+
+set it by ``` setLibraryOffset(int) ```
+
+use -1 to become max in default<br>
+use int value to custom library offset, no limit
+
+> Warn <br>
+> try not to set offset higher than 1024<br>
+> if configs more than 500 entries
+
+<details>
+<summary>setLibraryOffset</summary>
+
+```java
+import com.github.zhuaidadaya.utils.config.ConfigUtil;
+
+public class Test {
+    ConfigUtil config;
+
+    public void initConfig() {
+        config = new ConfigUtil();
+
+        config.setLibraryOffset(50);
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>setLibraryOffset Reference </summary>
+
+```java
+
+
+public class ConfigUtil {
+    public ConfigUtil setLibraryOffset(int offset) {
+        if(offset != - 1)
+            this.libraryOffset = Math.max(1, offset);
+        else
+            this.libraryOffset = 1024;
+        return this;
+    }
+}
+```
+
+</details>
+
+<hr>
+
 
 
 ## Encryption
+
+
+
+
+## Reform
+
+CU has a few reform support to use
+
+### ConfigUtil
+
+premier CU
+
+### ReformUtil
+
+### ReformPureUtil
+
+<hr>
